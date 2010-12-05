@@ -1,0 +1,13 @@
+CHANGELOG
+Manifest
+Rakefile
+lib/palmade/rediscule.rb
+lib/palmade/rediscule/base_item.rb
+lib/palmade/rediscule/base_queue.rb
+lib/palmade/rediscule/constants.rb
+lib/palmade/rediscule/durable_item.rb
+lib/palmade/rediscule/durable_queue.rb
+spec/base_queue_spec.rb
+spec/durable_queue_spec.rb
+spec/spec.opts
+spec/spec_helper.rb
