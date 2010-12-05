@@ -9,6 +9,8 @@ module Palmade
       attr_reader :queue
       attr_reader :rcache
 
+      attr_reader :meta
+
       def self.generate_trx_id
         srand(Time.now.usec)
         Digest::MD5.hexdigest(ITEM_TRX_ID_FORMAT %
@@ -70,7 +72,7 @@ module Palmade
 
       def get_meta
         json_meta = rcache.hget(item_key, Cmeta)
-        unless json_meta.nil?
+        unless json_meta.nil? || json_meta.empty?
           @meta.update(deserialize_meta(json_meta))
         else
           nil

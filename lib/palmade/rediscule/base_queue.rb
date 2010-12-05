@@ -23,7 +23,7 @@ module Palmade::Rediscule
 
     # Push a new item (given the data) to the queue
     def push(o)
-      ik = item_klass.new(self)
+      ik = create_item
       ik.put_and_update_meta(o)
 
       rcache.lpush(queue_cache_key, ik.trx_id)
@@ -43,9 +43,14 @@ module Palmade::Rediscule
     def pop
       trx_id = rcache.rpop(queue_cache_key)
       unless trx_id.nil? || trx_id.empty?
-        ik = item_klass.new(self, trx_id)
-        ik.get_meta
-        ik
+        ik = create_item(trx_id)
+        unless ik.get_meta.nil?
+          ik
+        else
+          nil
+        end
+      else
+        nil
       end
     end
 
@@ -57,7 +62,16 @@ module Palmade::Rediscule
       end
     end
 
-    # Internal method: Sets the item klass that this queue.
+    # Return number of items in the queue
+    def size
+      rcache.llen(queue_cache_key)
+    end
+
+    def create_item(trx_id = nil)
+      item_klass.new(self, trx_id)
+    end
+
+    # Internal method: Sets the item klass for this queue.
     def set_item_klass(klass)
       @item_klass = klass
     end

@@ -32,26 +32,131 @@ module Palmade::Rediscule
       @options[:work_perform_limit]
     end
 
-    # TODO: In addition to normal pop of items, enqueue the items to the
+    # In addition to normal pop of items, enqueue the items to the
     # working queue.
     def pop
       trx_id = rcache.rpoplpush(queue_cache_key, working_cache_key)
       unless trx_id.nil? || trx_id.empty?
-        ik = item_klass.new(self, trx_id)
-        ik.get_meta
-        ik.working!
-        ik
+        ik = create_item(trx_id)
+        unless ik.get_meta.nil?
+          ik.working!
+          ik
+        else
+          nil
+        end
+      else
+        nil
       end
     end
 
-    # TODO: Check overdue items.
-    # Go through the 'working' queue and move them to delayed.
+    # Return the number of items being worked on.
+    def working_size
+      rcache.llen(working_cache_key)
+    end
+
+    # Return the number of items waiting for retry.
+    def retries_size
+      rcache.llen(retries_cache_key)
+    end
+
+    def each_working(&block)
+      trx_ids = rcache.lrange(working_cache_key, 0, -1)
+      unless trx_ids.nil? || trx_ids.empty?
+        trx_ids.each do |trx_id|
+          yield create_item(trx_id)
+        end
+      end
+    end
+
+    def each_retries(&block)
+      trx_ids = rcache.lrange(retries_cache_key, 0, -1)
+      unless trx_ids.nil? || trx_ids.empty?
+        trx_ids.each do |trx_id|
+          yield create_item(trx_id)
+        end
+      end
+    end
+
+    def cleanup_overdue
+      each_working do |item|
+        if item.get_meta.nil?
+          # we got a nil, perhaps, it's already been deleted.
+          rcache.lrem(working_cache_key, 0, item.trx_id)
+        end
+      end
+    end
+
+    def find_overdue
+      overdue = [ ]
+      each_working do |item|
+        unless item.get_meta.nil?
+          # then push, overdue items
+          overdue.push(item) if item.overdue?
+        end
+      end
+      overdue
+    end
+
+    def cleanup_retries
+      each_retries do |item|
+        if item.get_meta.nil?
+          rcache.lrem(retries_cache_key, 0, item.trx_id)
+        end
+      end
+    end
+
+    def find_retries
+      retries = [ ]
+      each_retries do |item|
+        unless item.get_meta.nil?
+          retries.push(item) if item.retry?
+        end
+      end
+      retries
+    end
+
+    # Check overdue items.
+    # Go through the 'working' queue and return overdue items.
+    #
+    # Implementation notes:
+    # Go through each item, check meta.
+    # If meta is nil, just remove from working queue.
+    # If there's meta, check if overdue?
+    # If overdue? append to list
+    # If not, skip.
     def check_overdue
+      overdue = [ ]
+      each_working do |item|
+        unless item.get_meta.nil?
+          # then push, overdue items
+          overdue.push(item) if item.overdue?
+        else
+          rcache.lrem(working_cache_key, 0, item.trx_id)
+        end
+      end
+      overdue
     end
 
     # TODO: Check retry items.
     # Go through the 'retries' queue and requeue when ready.
+    #
+    # Implementation notes:
+    # Go through each item, check meta.
+    # If meta is nil, just remove from working queue.
+    # If there's meta, check if ready for retry.
+    # If ready, requeue.
+    # If not, skip.
     def check_retries
+      retries = [ ]
+      each_retries do |item|
+        unless item.get_meta.nil?
+          retries.push(item) if item.retry?
+        else
+          # we got a nil, perhaps, it's already been deleted.
+          rcache.lrem(retries_cache_key, 0, item.trx_id)
+        end
+      end
+      retries
     end
   end
 end
