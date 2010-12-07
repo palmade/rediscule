@@ -81,7 +81,7 @@ module Palmade
         end
       end
 
-      def can_retry_later
+      def can_retry_later?
         rt_count < queue.rt_max_count
       end
 
