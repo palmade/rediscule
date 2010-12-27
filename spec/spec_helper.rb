@@ -28,3 +28,6 @@ module Palmade::Rediscule
     end
   end
 end
+
+class TestWorker < Palmade::Rediscule::Worker
+end
