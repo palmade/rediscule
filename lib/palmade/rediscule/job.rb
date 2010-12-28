@@ -7,7 +7,8 @@ module Palmade::Rediscule
       :origin => Cself,
       :queue_klass => nil,
       :queue_key_prefix => nil,
-      :queue_options => { }
+      :queue_options => { },
+      :rcache => nil
     }
 
     Cdefault_queue_key_prefix = "rediscule/job/%s".freeze
@@ -76,11 +77,9 @@ module Palmade::Rediscule
 
         @queue = queue_klass.new(@options[:queue_key_prefix],
                                  @options[:queue_options])
+        @queue.set_rcache(rcache)
+        @queue
       end
-    end
-
-    def set_rcache(rcache)
-      queue.set_rcache(rcache)
     end
 
     def destroy
@@ -89,16 +88,31 @@ module Palmade::Rediscule
 
     protected
 
+    def rcache
+      if defined?(@rcache)
+        @rcache
+      else
+        case @options[:rcache]
+        when String
+          @rcache = eval(@options[:rcache], TOPLEVEL_BINDING)
+        when nil
+          @rcache = nil
+        else
+          @rcache = @options[:rcache]
+        end
+      end
+    end
+
     def default_queue_klass
       Palmade::Rediscule::BaseQueue
     end
 
     def create_unit(action, params = { })
       {
-        Cjobkey => job_key,
-        Caction => action,
+        Cjobkey => job_key.to_s,
+        Caction => action.to_s,
         Cparams => params,
-        Corigin => origin
+        Corigin => origin.to_s
       }
     end
 

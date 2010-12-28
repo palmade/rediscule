@@ -6,12 +6,14 @@ context "Jobber" do
       Palmade::Rediscule.configure do
         init SPEC_ROOT, SPEC_ENV
         config "spec/config/jobber.yml"
-        map_job "test", :class_name => "TestWorker", :type => "durable"
+        map_job("test",
+                :class_name => "TestWorker",
+                :type => "durable",
+                :rcache => "Palmade::Rediscule::SpecHelper.rcache")
       end
 
       @jobber = Palmade::Rediscule.jobber
       @job = @jobber.jobs["test"]
-      @job.set_rcache(Palmade::Rediscule::SpecHelper.rcache)
     end
 
     it "should instantiate a durable job" do
