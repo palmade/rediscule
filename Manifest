@@ -16,6 +16,7 @@ lib/palmade/rediscule/janitor_puppet.rb
 lib/palmade/rediscule/job.rb
 lib/palmade/rediscule/jobber.rb
 lib/palmade/rediscule/worker.rb
+rediscule.gemspec
 spec/base_queue_spec.rb
 spec/config/jobber.yml
 spec/daemon_spec.rb
