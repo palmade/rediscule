@@ -44,7 +44,7 @@ module Palmade::Rediscule
       self
     end
 
-    def order(action, params = { })
+    def order(action, params = { }, &block)
       queue.push(create_unit(action, params))
     end
 
@@ -126,6 +126,17 @@ module Palmade::Rediscule
         end
       else
         @worker_klass
+      end
+    end
+
+    ORDER_PRETTY_METHOD_REGEX = /\Aorder\_(.+)\Z/i.freeze
+    def method_missing(meth, *args, &block)
+      meth = meth.to_s
+      if meth =~ ORDER_PRETTY_METHOD_REGEX
+        action = $~[1]
+        order(action, *args, &block)
+      else
+        super(meth, *args, &block)
       end
     end
   end

@@ -30,15 +30,30 @@ module Palmade::Rediscule
     end
 
     def perform(item, unit)
-      @item_status = nil
-      @item = item
       @unit = unit
+      @item = item
+
+      action = @unit[Caction].to_sym
+
+      if public_methods(false).include?(action)
+        perform_action(action)
+      else
+        # do nothing
+        @item.destroy
+        logger.error { "!!! #{self.class.name} does not respond to action #{action}" }
+
+        self
+      end
+    end
+
+    def perform_action(action)
+      @item_status = nil
       @params = @unit[Cparams]
 
       before_perform
 
       catch(:performed) do
-        send(@unit[Caction])
+        send(action)
       end
 
       after_perform
