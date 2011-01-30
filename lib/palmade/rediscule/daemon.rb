@@ -3,7 +3,7 @@ module Palmade::Rediscule
     include Constants
 
     DEFAULT_OPTIONS = {
-
+      :middlware => nil
     }
 
     attr_reader :job_keys
@@ -20,6 +20,8 @@ module Palmade::Rediscule
       @logger = jobber.logger
       @job_keys = job_keys
       @job_cycles = nil
+
+      @middleware = @options[:middleware]
     end
 
     def start
@@ -70,12 +72,29 @@ module Palmade::Rediscule
       unless item.nil?
         unit = item.get
         unless unit.nil?
-          benchmark_and_log(job, item, unit) do
-            job.perform(item, unit)
+          app = lambda do |env|
+            env[:job].perform(env[:item], env[:unit])
           end
+
+          bal_log = lambda do |env|
+            benchmark_and_log(env, &app)
+          end
+
+          perform_middleware(:job => job,
+                             :item => item,
+                             :unit => unit,
+                             &bal_log)
         else
           logger.error { "!!! Item #{item.trx_id} is gone" }
         end
+      end
+    end
+
+    def perform_middleware(env, &block)
+      unless @middelware.nil?
+        @middleware.call(env, block)
+      else
+        yield(env)
       end
     end
 
@@ -87,8 +106,9 @@ module Palmade::Rediscule
       end
     end
 
-    def benchmark_and_log(job, item, unit, &block)
+    def benchmark_and_log(env, &block)
       rt = nil; ret = [ false, nil ]
+      job, item, unit = env[:job], env[:item], env[:unit]
 
       tm = Time.now.strftime(Clogtimestamp)
 
@@ -100,7 +120,7 @@ module Palmade::Rediscule
                             tm,
                             unit[Cparams].inspect) }
 
-      rt = [ Benchmark.measure { ret = yield }.real, 0.0001 ].max
+      rt = [ Benchmark.measure { ret = yield(env) }.real, 0.0001 ].max
 
       logger.info { sprintf(Clogcompletedformat,
                             rt,

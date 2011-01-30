@@ -23,6 +23,8 @@ module Palmade
 
     autoload :Async, File.join(REDISCULE_LIB_DIR, 'rediscule/async')
     autoload :AsyncWorker, File.join(REDISCULE_LIB_DIR, 'rediscule/async_worker')
+    
+    class RedisculeError < StandardError; end
 
     def self.json_encode(o)
       Yajl::Encoder.encode(o)
