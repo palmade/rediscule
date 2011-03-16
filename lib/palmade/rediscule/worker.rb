@@ -35,7 +35,7 @@ module Palmade::Rediscule
 
       action = @unit[Caction].to_sym
 
-      if public_methods(false).include?(action)
+      if self.class.public_method_defined?(action)
         perform_action(action)
       else
         # do nothing
