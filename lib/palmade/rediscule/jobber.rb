@@ -35,8 +35,6 @@ module Palmade::Rediscule
       config_path = File.join(@root_path, config_path || CDEFAULT_CONFIG_PATH)
       if File.exists?(config_path)
         @config = YAML.load_file(config_path)
-      else
-        raise "Config file not found. Expected: #{config_path}"
       end
     end
 
