@@ -22,12 +22,12 @@ module Palmade::Rediscule
         end
       end
 
-      def asinc_send(method, args)
-        asinc.order_perform_async({
+      def asinc_send(method, args = nil, wait_for_response = false, params = {})
+        asinc.order_perform_async(params.merge({
           'class' => self.to_s,
           'method' => method,
           'args' => args
-        })
+        }))
       end
     end
 
@@ -38,13 +38,17 @@ module Palmade::Rediscule
         method = $~[1]
 
         if self.respond_to?(method)
-          self.class.asinc_send(method, args)
+          asinc_send(method, args)
         else
           method_missing_without_asinc(method, *args, &block)
         end
       else
         method_missing_without_asinc(method, *args, &block)
       end
+    end
+
+    def asinc_send(method, args = nil, wait_for_response = false, params = {})
+      self.class.asinc_send(method, args, wait_for_response, params)
     end
 
     def self.included(base)
