@@ -21,6 +21,9 @@ module Palmade
     autoload :DaemonPuppet, File.join(REDISCULE_LIB_DIR, 'rediscule/daemon_puppet')
     autoload :JanitorPuppet, File.join(REDISCULE_LIB_DIR, 'rediscule/janitor_puppet')
 
+    autoload :Async, File.join(REDISCULE_LIB_DIR, 'rediscule/async')
+    autoload :AsyncWorker, File.join(REDISCULE_LIB_DIR, 'rediscule/async_worker')
+
     def self.json_encode(o)
       Yajl::Encoder.encode(o)
     end
