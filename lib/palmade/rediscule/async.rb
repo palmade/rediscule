@@ -1,9 +1,8 @@
 module Palmade::Rediscule
   module Async
-
     module ClassMethods
       def asinc
-        Palmade::Rediscule.jobber.jobs["async"]
+        Palmade::Rediscule.jobber.jobs[jobkey || 'async']
       end
 
       protected
@@ -22,12 +21,12 @@ module Palmade::Rediscule
         end
       end
 
-      def asinc_send(method, args = nil, wait_for_response = false, params = {})
-        asinc.order_perform_async(params.merge({
-          'class' => self.to_s,
-          'method' => method,
-          'args' => args
-        }))
+      def asinc_send(method, args = nil, wait_for_response = false, params = { })
+        asinc.order_perform_async({
+                                    'class' => self.to_s,
+                                    'method' => method,
+                                    'args' => args
+                                  }.merge(params))
       end
     end
 
@@ -47,7 +46,7 @@ module Palmade::Rediscule
       end
     end
 
-    def asinc_send(method, args = nil, wait_for_response = false, params = {})
+    def asinc_send(method, args = nil, wait_for_response = false, params = { })
       self.class.asinc_send(method, args, wait_for_response, params)
     end
 
@@ -58,6 +57,8 @@ module Palmade::Rediscule
       class << base
         alias :method_missing_without_asinc :method_missing
         alias :method_missing :method_missing_with_asinc
+
+        attr_accessor :jobkey
       end
 
       # instance method overrides
@@ -66,6 +67,5 @@ module Palmade::Rediscule
         alias :method_missing :method_missing_with_asinc
       end
     end
-
   end
 end

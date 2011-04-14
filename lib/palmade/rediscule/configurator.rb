@@ -8,6 +8,7 @@ module Palmade::Rediscule
       @jobber = nil
       @configured = false
       @finalized = false
+      @default_job_options = { }
     end
 
     def configure(&block)
@@ -32,9 +33,22 @@ module Palmade::Rediscule
       @jobber.set_logger(l)
     end
 
+    def set_job_options(hash = { })
+      @default_job_options.update(hash)
+    end
+
     def map_job(job_k, options = { })
       jobber_required
-      @jobber.map_job(job_k, options)
+      @jobber.map_job(job_k, @default_job_options.merge(options))
+    end
+
+    def map_async_jobs(job_k,
+                       options = { })
+      jobber_required
+      @jobber.map_job(job_k, {
+                        :class_name => 'Palmade::Rediscule::AsyncWorker',
+                        :type => :durable
+                      }.merge(@default_job_options).merge(options))
     end
 
     def finalize
