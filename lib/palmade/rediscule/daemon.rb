@@ -112,13 +112,23 @@ module Palmade::Rediscule
 
       tm = Time.now.strftime(Clogtimestamp)
 
+      params = unit[Cparams].inject({ }) do |o, (k,v)|
+        case v
+        when String
+          o[k] = v.length > 70 ? "%s..." % v[0,70] : v
+        else
+          o[k] = v
+        end
+        o
+      end
+
       logger.info { sprintf(Clogprocessingformat,
                             job.job_key,
                             unit[Caction],
                             item.trx_id,
                             unit[Corigin],
                             tm,
-                            unit[Cparams].inspect) }
+                            params.inspect) }
 
       rt = [ Benchmark.measure { ret = yield(env) }.real, 0.0001 ].max
 
