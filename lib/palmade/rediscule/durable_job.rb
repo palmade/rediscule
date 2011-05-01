@@ -27,6 +27,7 @@ module Palmade::Rediscule
         logger.warn { "Found #{retries.size} items for retrying" }
         retries.each do |item|
           item.retry!
+          logger.warn { "  #{item.trx_id} #{item.rt_count} #{item.rt_at}" }
         end
       end
     end
