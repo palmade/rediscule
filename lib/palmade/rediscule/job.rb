@@ -35,6 +35,8 @@ module Palmade::Rediscule
 
       if @options[:queue_key_prefix].nil?
         @options[:queue_key_prefix] = sprintf(Cdefault_queue_key_prefix, @job_key)
+      else
+        @options[:queue_key_prefix] = sprintf(@options[:queue_key_prefix], @job_key)
       end
 
       @worker_klass = nil
