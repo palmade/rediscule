@@ -8,7 +8,7 @@ module Palmade::Rediscule
 
       # let's try to pad the arguments
       if (ar = klass.method(method).arity) < 0
-        ar = (ar * -1) + 1
+        ar = ar * -1
 
         if args.size < ar
           args.fill(nil, args.size, ar - args.size - 1) if (ar - args.size) > 1
